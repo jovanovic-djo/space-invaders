@@ -4,16 +4,17 @@ import time
 import random
 pygame.font.init()
 
+# Window dimesions
 WIDTH, HEIGHT = 750, 750
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Kokoske")
+pygame.display.set_caption("Space Invaders")
 
-# Load images
-RED_SPACE_SHIP = pygame.image.load(os.path.join("assets", "pixel_ship_red_small.png"))
-GREEN_SPACE_SHIP = pygame.image.load(os.path.join("assets", "pixel_ship_green_small.png"))
-BLUE_SPACE_SHIP = pygame.image.load(os.path.join("assets", "pixel_ship_blue_small.png"))
+# Spaceship images
+RED_SPACESHIP = pygame.image.load(os.path.join("assets", "pixel_ship_red_small.png"))
+GREEN_SPACESHIP = pygame.image.load(os.path.join("assets", "pixel_ship_green_small.png"))
+BLUE_SPACESHIP = pygame.image.load(os.path.join("assets", "pixel_ship_blue_small.png"))
 
-# Player player
+# Player image
 YELLOW_SPACE_SHIP = pygame.image.load(os.path.join("assets", "pixel_ship_yellow.png"))
 
 # Lasers
@@ -22,7 +23,7 @@ GREEN_LASER = pygame.image.load(os.path.join("assets", "pixel_laser_green.png"))
 BLUE_LASER = pygame.image.load(os.path.join("assets", "pixel_laser_blue.png"))
 YELLOW_LASER = pygame.image.load(os.path.join("assets", "pixel_laser_yellow.png"))
 
-# Background
+# Background image
 BG = pygame.transform.scale(pygame.image.load(os.path.join("assets", "background-black.png")), (WIDTH, HEIGHT))
 
 class Laser:
@@ -123,9 +124,9 @@ class Player(Ship):
 
 class Enemy(Ship):
     COLOR_MAP = {
-                "red": (RED_SPACE_SHIP, RED_LASER),
-                "green": (GREEN_SPACE_SHIP, GREEN_LASER),
-                "blue": (BLUE_SPACE_SHIP, BLUE_LASER)
+                "red": (RED_SPACESHIP, RED_LASER),
+                "green": (GREEN_SPACESHIP, GREEN_LASER),
+                "blue": (BLUE_SPACESHIP, BLUE_LASER)
                 }
 
     def __init__(self, x, y, color, health=100):
@@ -153,8 +154,8 @@ def main():
     FPS = 60
     level = 0
     lives = 5
-    main_font = pygame.font.SysFont("comicsans", 30)
-    lost_font = pygame.font.SysFont("comicsans", 60)
+    main_font = pygame.font.SysFont("comicsans", 20)
+    lost_font = pygame.font.SysFont("comicsans", 50)
 
     enemies = []
     wave_length = 5
