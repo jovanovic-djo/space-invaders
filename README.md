@@ -8,5 +8,5 @@ Creating mini game in Python using pygame module
 * Collectables with different perks
 * More enemies with different abilities
 * Optional sound effects
-* Improved level system that would include various background, soundeffects and enemies
+* Improved level system that would include various background, soundeffects and new enemies
 * Advanced main menu with more options for user
