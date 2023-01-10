@@ -2,7 +2,7 @@
 #### Alpha version of game 
 Creating mini game in Python using pygame module
 
-#### Features to be added: 
+#### Features to be added:  
 * Score counter
 * Leaderboard
 * Collectables with different perks
