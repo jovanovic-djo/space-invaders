@@ -1,89 +1,118 @@
-import unittest
+import pytest
 import pygame
-from main import Ship, Player, Enemy, Laser, collide
+from unittest.mock import MagicMock
 
-class TestSpaceInvaders(unittest.TestCase):
-    def setUp(self):
-        pygame.init()
-        self.screen = pygame.display.set_mode((750, 750))
-        
-    def tearDown(self):
-        pygame.quit()
-        
-    def test_ship_initialization(self):
-        """Test basic ship initialization"""
-        ship = Ship(100, 100)
-        self.assertEqual(ship.x, 100)
-        self.assertEqual(ship.y, 100)
-        self.assertEqual(ship.health, 100)
-        self.assertEqual(len(ship.lasers), 0)
-        
-    def test_player_initialization(self):
-        """Test player specific initialization"""
-        player = Player(100, 100, 150)
-        self.assertEqual(player.health, 150)
-        self.assertEqual(player.max_health, 150)
-        self.assertIsNotNone(player.ship_img)
-        self.assertIsNotNone(player.laser_img)
-        
-    def test_enemy_initialization(self):
-        """Test enemy initialization with different colors"""
-        colors = ["red", "green", "blue"]
-        for color in colors:
-            enemy = Enemy(100, 100, color)
-            self.assertIsNotNone(enemy.ship_img)
-            self.assertIsNotNone(enemy.laser_img)
-            
-    def test_laser_movement(self):
-        """Test laser movement mechanics"""
-        laser = Laser(100, 100, pygame.Surface((10, 10)))
-        initial_y = laser.y
-        laser.move(5)
-        self.assertEqual(laser.y, initial_y + 5)
-        
-    def test_ship_cooldown(self):
-        """Test ship shooting cooldown mechanism"""
-        ship = Ship(100, 100)
-        ship.cool_down_counter = 0
-        ship.shoot()
-        self.assertGreater(ship.cool_down_counter, 0)
-        
-    def test_player_health_reduction(self):
-        """Test player health reduction mechanics"""
-        player = Player(100, 100, 100)
-        initial_health = player.health
-        player.health -= 10
-        self.assertEqual(player.health, initial_health - 10)
-        
-    def test_enemy_movement(self):
-        """Test enemy movement mechanics"""
-        enemy = Enemy(100, 100, "red")
-        initial_y = enemy.y
-        enemy.move(5)
-        self.assertEqual(enemy.y, initial_y + 5)
-        
-    def test_collision_detection(self):
-        """Test collision detection between objects"""
-        player = Player(100, 100)
-        enemy = Enemy(100, 100, "red")
-        self.assertTrue(collide(player, enemy))
-        enemy = Enemy(500, 500, "red")  # Far away position
-        self.assertFalse(collide(player, enemy))
-        
-    def test_laser_off_screen(self):
-        """Test laser off screen detection"""
-        laser = Laser(100, -10, pygame.Surface((10, 10)))
-        self.assertTrue(laser.off_screen(750))
-        laser = Laser(100, 100, pygame.Surface((10, 10)))
-        self.assertFalse(laser.off_screen(750))
-        
-    def test_player_boundaries(self):
-        """Test player movement boundaries"""
-        player = Player(0, 0)
-        initial_x = player.x
-        # Simulate moving left at boundary
-        player.x -= 5
-        self.assertEqual(player.x, initial_x)
-        
-if __name__ == '__main__':
-    unittest.main()
+from main import Laser, Ship, Player, Enemy, collide, HEIGHT
+
+pygame.init()
+
+@pytest.fixture
+def dummy_laser_image():
+    return pygame.Surface((5, 10))
+
+@pytest.fixture
+def dummy_ship_image():
+    return pygame.Surface((50, 50))
+
+@pytest.fixture
+def player(dummy_ship_image, dummy_laser_image):
+    player = Player(300, 630)
+    player.ship_img = dummy_ship_image
+    player.laser_img = dummy_laser_image
+    return player
+
+@pytest.fixture
+def enemy(dummy_ship_image, dummy_laser_image):
+    enemy = Enemy(100, 100, "red")
+    enemy.ship_img = dummy_ship_image
+    enemy.laser_img = dummy_laser_image
+    return enemy
+
+@pytest.fixture
+def laser(dummy_laser_image):
+    return Laser(100, 100, dummy_laser_image)
+
+# Test Laser class
+def test_laser_off_screen(laser):
+    assert laser.off_screen(HEIGHT) is False
+    laser.y = -10
+    assert laser.off_screen(HEIGHT) is True
+
+
+def test_laser_collision(dummy_ship_image, laser):
+    ship = Ship(100, 100)
+    ship.ship_img = dummy_ship_image
+    ship.mask = pygame.mask.from_surface(dummy_ship_image)
+    assert laser.collision(ship) is True
+
+    laser.x = 200
+    assert laser.collision(ship) is False
+
+# Test Ship class
+def test_ship_cooldown(player):
+    player.cooldown()
+    assert player.cool_down_counter == 1
+    player.cooldown()
+    assert player.cool_down_counter == 2
+
+
+def test_ship_shoot(player):
+    assert len(player.lasers) == 0
+    player.shoot()
+    assert len(player.lasers) == 1
+
+# Test Player class
+def test_player_move_lasers(player, enemy):
+    player.shoot()
+    laser = player.lasers[0]
+    laser.y = enemy.y
+    laser.x = enemy.x
+
+    player.move_lasers(-5, [enemy])
+    assert len(player.lasers) == 0
+    assert enemy.health == 90
+
+
+def test_player_healthbar(player):
+    mock_window = MagicMock()
+    player.healthbar(mock_window)
+    assert mock_window.blit.call_count == 0  # No errors
+
+# Test Enemy class
+def test_enemy_move(enemy):
+    initial_y = enemy.y
+    enemy.move(5)
+    assert enemy.y == initial_y + 5
+
+
+def test_enemy_shoot(enemy):
+    assert len(enemy.lasers) == 0
+    enemy.shoot()
+    assert len(enemy.lasers) == 1
+
+# Test collide function
+def test_collide(dummy_ship_image):
+    obj1 = Ship(100, 100)
+    obj2 = Ship(120, 120)
+
+    obj1.ship_img = dummy_ship_image
+    obj2.ship_img = dummy_ship_image
+    obj1.mask = pygame.mask.from_surface(dummy_ship_image)
+    obj2.mask = pygame.mask.from_surface(dummy_ship_image)
+
+    assert collide(obj1, obj2) is True
+
+    obj2.x = 200
+    assert collide(obj1, obj2) is False
+
+# Test edge cases
+def test_laser_edge_case(dummy_laser_image):
+    laser = Laser(0, HEIGHT, dummy_laser_image)
+    assert laser.off_screen(HEIGHT) is False
+    laser.y = HEIGHT + 1
+    assert laser.off_screen(HEIGHT) is True
+
+@pytest.fixture(scope="module", autouse=True)
+def cleanup():
+    yield
+    pygame.quit()
